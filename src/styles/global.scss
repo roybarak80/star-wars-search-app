@@ -19,6 +19,21 @@ h1 {
 
 .home-wrapper {
   padding: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  .home-logo {
+background-image: url(/src/assets/sw-logo.png);
+   
+    height: 18rem;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 30%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
   .search-wrapper {
     width: 100%;
     text-align: center;
