@@ -1,0 +1,39 @@
+/* src/styles/global.scss */
+$primary-color: #3498db;
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-image: url("../assets/bg.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: "Arial", sans-serif;
+}
+
+h1 {
+  color: $primary-color;
+}
+
+.home-wrapper {
+  padding: 20px;
+  .search-wrapper {
+    width: 100%;
+    text-align: center;
+  }
+}
+.page-wrapper {
+  padding: 20px;
+  .small-button {
+    padding: 0 8px;
+    font-size: 0.75rem;
+    height: 2rem;
+    width: fit-content;
+  }
+  .page-right-btns-wrapper {
+    display: flex;
+    align-items: center;
+  }
+}
