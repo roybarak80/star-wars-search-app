@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Autocomplete, TextField, Button, Box, Typography } from '@mui/material';
-import { SearchResult } from '@/types/types'; // Import your type
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from React Router
+import { SearchResult } from '@/types/types';
+import { useNavigate } from 'react-router-dom';
 
-// Define GroupedOption, extending SearchResult
 interface GroupedOption extends SearchResult {
-  category: string; // Group for Autocomplete (People, Planets, etc.)
-  label: string;    // Display label (either name or title)
+  category: string;
+  label: string;
+  url?: string;
 }
 
 const SearchComponent = () => {
@@ -27,8 +27,8 @@ const SearchComponent = () => {
     starships: [],
   });
   const [loading, setLoading] = useState(false);
-  
-  const navigate = useNavigate(); // Initialize the navigation hook
+
+  const navigate = useNavigate();
 
   const handleSearch = async (searchQuery: string) => {
     setLoading(true);
@@ -51,24 +51,15 @@ const SearchComponent = () => {
 
       const responses = await Promise.all(requests);
 
-      // Explicitly type the groupedResults to match the structure of the state
-      const groupedResults: {
-        people: SearchResult[];
-        planets: SearchResult[];
-        films: SearchResult[];
-        species: SearchResult[];
-        vehicles: SearchResult[];
-        starships: SearchResult[];
-      } = responses.reduce(
+      const groupedResults = responses.reduce(
         (acc, result) => {
           const key = Object.keys(result)[0] as keyof typeof results;
           acc[key] = result[key];
           return acc;
         },
-        { people: [], planets: [], films: [], species: [], vehicles: [], starships: [] } // initial state structure
+        { people: [], planets: [], films: [], species: [], vehicles: [], starships: [] }
       );
 
-      // Correctly assign the typed groupedResults to the state
       setResults(groupedResults);
     } catch (error) {
       console.error('Search failed', error);
@@ -86,15 +77,17 @@ const SearchComponent = () => {
 
   const handleOptionSelect = (event: React.SyntheticEvent, selectedOption: GroupedOption | null) => {
     if (selectedOption) {
-      // Navigate to the appropriate category page using the category and ID from the selected option
       navigate(`/${selectedOption.category.toLowerCase()}/${selectedOption.url.split('/').slice(-2, -1)[0]}`);
     }
   };
 
   const handleViewAll = (category: string) => {
-    // Navigate to the category page (e.g., /people, /planets)
-     const lowerCaseCategory = category.toLowerCase();
-  navigate(`/${lowerCaseCategory}`);
+    console.log(`View All clicked for ${category}`);
+    navigate(`/${category.toLowerCase()}`);
+  };
+
+  const handleItemClick = () => {
+    return false;
   };
 
   const categoryMap: { [key: string]: string } = {
@@ -105,54 +98,48 @@ const SearchComponent = () => {
     vehicles: 'Vehicles',
     starships: 'Starships',
   };
-  
+
   const options: GroupedOption[] = Object.entries(results)
     .flatMap(([key, items]) =>
       items.map((item) => ({
-        label: item.name || item.title || '', // Use either name or title
-        category: categoryMap[key], // Map key to category name
+        label: item.name || item.title || '',
+        category: categoryMap[key],
         ...item,
       }))
     )
-    .filter((option) => option.label); // Filter out empty labels
+    .filter((option) => option.label);
 
   return (
-   
-      <Autocomplete
-        freeSolo
-        options={options}
-        groupBy={(option: GroupedOption) => option.category} // Group options by category
-        getOptionLabel={(option: GroupedOption) => option.label} // Display the label for each option
-        onInputChange={handleAutocompleteChange}
-        onChange={handleOptionSelect} // Handle option selection
-        renderOption={({ key, ...props }, option) => (
-          <li key={option.label} {...props}>
-            <Typography>{option.label}</Typography>
-          </li>
-        )}
-        renderGroup={(params) => (
-          <div key={params.key}>
-            <Box component="li" sx={{ padding: '10px',  borderBottom: '1px solid #ccc' }}>
-              <Typography variant="h1">{params.group}</Typography>
-            </Box>
-            {params.children}
-            <Box sx={{ textAlign: 'center', padding: '10px' }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => handleViewAll(params.group)}
-              >
-                View All {params.group}
-              </Button>
-            </Box>
-          </div>
-        )}
-        renderInput={(params) => (
-          <TextField sx={{ width: '50%' }} {...params} label="Search Star Wars Data" variant="outlined" />
-        )}
-        loading={loading} // Display loading indicator if needed
-      />
-    
+    <Autocomplete
+      freeSolo
+      options={options}
+      groupBy={(option: GroupedOption) => option.category}
+      getOptionLabel={(option: GroupedOption) => option.label}
+      onInputChange={handleAutocompleteChange}
+      onChange={handleOptionSelect}
+      renderOption={({ key, ...props }, option) => (
+        <li key={option.label} {...props} onClick={() => handleItemClick()}>
+          <Typography>{option.label}</Typography>
+        </li>
+      )}
+      renderGroup={(params) => (
+        <div key={params.key}>
+          <Box component="li" sx={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
+            <Typography variant="h6">{params.group}</Typography>
+          </Box>
+          {params.children}
+          <Box sx={{ textAlign: 'center', padding: '10px' }}>
+            <Button variant="outlined" size="small" onClick={() => handleViewAll(params.group)}>
+              View All {params.group}
+            </Button>
+          </Box>
+        </div>
+      )}
+      renderInput={(params) => (
+        <TextField sx={{ width: '50%' }} {...params} label="Search Star Wars Data" variant="outlined" />
+      )}
+      loading={loading}
+    />
   );
 };
 
