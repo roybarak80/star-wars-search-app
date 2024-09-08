@@ -24,7 +24,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ category, handleCreate }) => {
           <Button size="small" variant="contained" onClick={handleCreate} className="small-button">
             Create New Character
           </Button>
-          <Button onClick={handleBack}>
+                  <Button onClick={handleBack} style={{marginLeft: "10px"}} >
             <ArrowBack />
           </Button>
         </div>
