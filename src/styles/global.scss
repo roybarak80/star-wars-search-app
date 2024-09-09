@@ -52,3 +52,22 @@ background-image: url(/src/assets/sw-logo.png);
     align-items: center;
   }
 }
+
+.typewriter {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.5rem;
+  white-space: nowrap;
+  border-right: 2px solid white;
+  animation: blink 1s step-end infinite;
+  
+}
+
+
+@keyframes blink {
+  from {
+    border-color: white;
+  }
+  to {
+    border-color: transparent;
+  }
+}
