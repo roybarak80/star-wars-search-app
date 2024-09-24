@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { debounce } from 'lodash';
 import { Autocomplete, TextField, Button, Box, Typography } from '@mui/material';
 import { SearchResult } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,8 @@ const SearchComponent = () => {
 
   const navigate = useNavigate();
 
-  const handleSearch = async (searchQuery: string) => {
+const debouncedSearch = useCallback(
+  debounce(async (searchQuery: string) => {
     setLoading(true);
 
     const endpoints = {
@@ -51,14 +53,19 @@ const SearchComponent = () => {
 
       const responses = await Promise.all(requests);
 
-      const groupedResults = responses.reduce(
-        (acc, result) => {
-          const key = Object.keys(result)[0] as keyof typeof results;
-          acc[key] = result[key];
-          return acc;
-        },
-        { people: [], planets: [], films: [], species: [], vehicles: [], starships: [] }
-      );
+      const groupedResults: typeof results = {
+        people: [],
+        planets: [],
+        films: [],
+        species: [],
+        vehicles: [],
+        starships: [],
+      };
+
+      responses.forEach((result) => {
+        const key = Object.keys(result)[0] as keyof typeof results;
+        groupedResults[key] = result[key];
+      });
 
       setResults(groupedResults);
     } catch (error) {
@@ -66,23 +73,36 @@ const SearchComponent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, 500),
+  []
+);
+
 
   const handleAutocompleteChange = (event: React.SyntheticEvent, value: string | null) => {
     if (value) {
       setQuery(value);
-      handleSearch(value);
-    }
+      debouncedSearch(value); 
+    } else {
+    setQuery('');
+    setResults({
+      people: [],
+      planets: [],
+      films: [],
+      species: [],
+      vehicles: [],
+      starships: [],
+    });
+  }
+    
   };
 
   const handleOptionSelect = (event: React.SyntheticEvent, selectedOption: GroupedOption | null) => {
-    if (selectedOption) {
+    if (selectedOption && selectedOption.url) {
       navigate(`/${selectedOption.category.toLowerCase()}/${selectedOption.url.split('/').slice(-2, -1)[0]}`);
     }
   };
 
   const handleViewAll = (category: string) => {
-    console.log(`View All clicked for ${category}`);
     navigate(`/${category.toLowerCase()}`);
   };
 
@@ -112,7 +132,7 @@ const SearchComponent = () => {
   return (
     <Autocomplete
       freeSolo
-      options={options}
+      options={options ? options : []}
       groupBy={(option: GroupedOption) => option.category}
       getOptionLabel={(option: GroupedOption) => option.label}
       onInputChange={handleAutocompleteChange}
