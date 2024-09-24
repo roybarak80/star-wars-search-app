@@ -3,6 +3,7 @@ import { debounce } from 'lodash';
 import { Autocomplete, TextField, Button, Box, Typography } from '@mui/material';
 import { SearchResult } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
+import { searchStarWarsData } from '@/services/starWarsApiService';
 
 interface GroupedOption extends SearchResult {
   category: string;
@@ -11,7 +12,7 @@ interface GroupedOption extends SearchResult {
 }
 
 const SearchComponent = () => {
-  const [query, setQuery] = useState('');
+ const [query, setQuery] = useState('');
   const [results, setResults] = useState<{
     people: SearchResult[];
     planets: SearchResult[];
@@ -31,52 +32,20 @@ const SearchComponent = () => {
 
   const navigate = useNavigate();
 
-const debouncedSearch = useCallback(
-  debounce(async (searchQuery: string) => {
-    setLoading(true);
-
-    const endpoints = {
-      people: 'https://swapi.dev/api/people/',
-      planets: 'https://swapi.dev/api/planets/',
-      films: 'https://swapi.dev/api/films/',
-      species: 'https://swapi.dev/api/species/',
-      vehicles: 'https://swapi.dev/api/vehicles/',
-      starships: 'https://swapi.dev/api/starships/',
-    };
-
-    try {
-      const requests = Object.entries(endpoints).map(([key, url]) =>
-        fetch(`${url}?search=${searchQuery}`).then((res) =>
-          res.json().then((data) => ({ [key]: data.results || [] }))
-        )
-      );
-
-      const responses = await Promise.all(requests);
-
-      const groupedResults: typeof results = {
-        people: [],
-        planets: [],
-        films: [],
-        species: [],
-        vehicles: [],
-        starships: [],
-      };
-
-      responses.forEach((result) => {
-        const key = Object.keys(result)[0] as keyof typeof results;
-        groupedResults[key] = result[key];
-      });
-
-      setResults(groupedResults);
-    } catch (error) {
-      console.error('Search failed', error);
-    } finally {
-      setLoading(false);
-    }
-  }, 500),
-  []
-);
-
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      setLoading(true);
+      try {
+        const groupedResults = await searchStarWarsData(searchQuery);
+        setResults(groupedResults); 
+      } catch (error) {
+        console.error('Search failed', error);
+      } finally {
+        setLoading(false);
+      }
+    }, 500),
+    []
+  );
 
   const handleAutocompleteChange = (event: React.SyntheticEvent, value: string | null) => {
     if (value) {
