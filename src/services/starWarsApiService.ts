@@ -44,3 +44,30 @@ export const searchStarWarsData = async (
 
   return groupedResults;
 };
+
+export interface Person {
+  name: string;
+  height: string;
+  mass: string;
+  gender: string;
+  birth_year: string;
+  url: string;
+}
+
+export const fetchPeople = async (
+  page: number
+): Promise<{ people: Person[]; count: number }> => {
+  const response = await fetch(`https://swapi.dev/api/people/?page=${page}`);
+  const data = await response.json();
+
+  const people: Person[] = data.results.map((person: any) => ({
+    name: person.name,
+    height: person.height,
+    mass: person.mass,
+    gender: person.gender,
+    birth_year: person.birth_year,
+    url: person.url,
+  }));
+
+  return { people, count: data.count };
+};
