@@ -1,0 +1,17 @@
+@keyframes blink {
+    0% {
+        background-color: #1a1717;
+    }
+
+    50% {
+        background-color: #292929;
+    }
+
+    100% {
+        background-color: #1a1717;
+    }
+}
+
+.blinkingRow {
+    animation: blink 1.5s ease-in-out infinite;
+}

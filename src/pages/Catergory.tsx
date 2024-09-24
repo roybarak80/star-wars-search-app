@@ -8,27 +8,22 @@ import {
   TableRow,
   Paper,
   IconButton,
-  TextField,
   Box,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Pagination,
-  Button,
 } from "@mui/material";
 import { Delete, Edit } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import { fetchPeople, Person } from "@/services/starWarsApiService";
+import PersonDialog from "@/components/PersonDialog";
+import styles from "@/pages/Category.module.css";
 
 const Category: React.FC = (): JSX.Element => {
   const [people, setPeople] = useState<Person[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1); 
   const [count, setCount] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
-  const { category } = useParams<{ category: string }>();
   const [newPerson, setNewPerson] = useState<Person>({
     name: "",
     height: "",
@@ -38,6 +33,7 @@ const Category: React.FC = (): JSX.Element => {
     url: "",
   });
 
+  const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
   const [errors, setErrors] = useState({
     name: "",
     height: "",
@@ -46,9 +42,8 @@ const Category: React.FC = (): JSX.Element => {
     birth_year: "",
   });
 
-  const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
-
-  const [isFormValid, setIsFormValid] = useState(false);
+  const [formTouched, setFormTouched] = useState(false); 
+  const { category } = useParams<{ category: string }>();
 
   useEffect(() => {
     if (category === "people") {
@@ -80,32 +75,30 @@ const Category: React.FC = (): JSX.Element => {
 
   const updateErrors = () => {
     const newErrors = {
-      name: newPerson.name ? "" : "Name is required",
+      name: !newPerson.name && formTouched ? "Name is required" : "",
       height:
-        newPerson.height && !isNaN(Number(newPerson.height))
-          ? ""
-          : "Height must be a number",
+        (!newPerson.height || isNaN(Number(newPerson.height))) && formTouched
+          ? "Height must be a number"
+          : "",
       mass:
-        newPerson.mass && !isNaN(Number(newPerson.mass))
-          ? ""
-          : "Mass must be a number",
-      gender: newPerson.gender ? "" : "Gender is required",
-      birth_year: newPerson.birth_year ? "" : "Birth year is required",
+        (!newPerson.mass || isNaN(Number(newPerson.mass))) && formTouched
+          ? "Mass must be a number"
+          : "",
+      gender: !newPerson.gender && formTouched ? "Gender is required" : "",
+      birth_year:
+        !newPerson.birth_year && formTouched ? "Birth year is required" : "",
     };
     setErrors(newErrors);
   };
 
   useEffect(() => {
-    const isValid = validatePerson();
-    setIsFormValid(isValid);
-  }, [newPerson]);
-
-  useEffect(() => {
     updateErrors();
-  }, [newPerson]);
+  }, [newPerson, formTouched]);
 
   const handleSave = () => {
-    if (isFormValid) {
+    setFormTouched(true);
+
+    if (validatePerson()) {
       if (editingPerson) {
         setPeople(
           people.map((person) =>
@@ -115,6 +108,10 @@ const Category: React.FC = (): JSX.Element => {
       } else {
         setPeople([...people, newPerson]);
       }
+
+
+      setHighlightedRow(newPerson.url);
+      setTimeout(() => setHighlightedRow(null), 10000); 
       setOpenDialog(false);
       setEditingPerson(null);
       setNewPerson({
@@ -125,15 +122,8 @@ const Category: React.FC = (): JSX.Element => {
         birth_year: "",
         url: "",
       });
-
-      // Highlight the row of the added or edited person for 10 seconds
-      setHighlightedRow(newPerson.url);
-      setTimeout(() => setHighlightedRow(null), 10000); // Remove highlight after 10 seconds
+      setFormTouched(false);
     }
-  };
-
-  const handleDelete = (url: string) => {
-    setPeople(people.filter((person) => person.url !== url));
   };
 
   const handleEdit = (person: Person) => {
@@ -184,27 +174,32 @@ const Category: React.FC = (): JSX.Element => {
                 {people.map((person) => (
                   <TableRow
                     key={person.url}
+                    className={
+                      highlightedRow === person.url ? styles.blinkingRow : ""
+                    }
                     sx={{
                       backgroundColor:
-                        highlightedRow === person.url ? "#1e1c1c" : "inherit",
+                        highlightedRow === person.url ? "#1a1717" : "inherit",
                       transition: "background-color 0.3s ease",
                     }}
                   >
-                    <>
-                      <TableCell>{person.name}</TableCell>
-                      <TableCell>{person.height}</TableCell>
-                      <TableCell>{person.mass}</TableCell>
-                      <TableCell>{person.gender}</TableCell>
-                      <TableCell>{person.birth_year}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => handleEdit(person)}>
-                          <Edit />
-                        </IconButton>
-                        <IconButton onClick={() => handleDelete(person.url)}>
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
-                    </>
+                    <TableCell>{person.name}</TableCell>
+                    <TableCell>{person.height}</TableCell>
+                    <TableCell>{person.mass}</TableCell>
+                    <TableCell>{person.gender}</TableCell>
+                    <TableCell>{person.birth_year}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleEdit(person)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        onClick={() =>
+                          setPeople(people.filter((p) => p.url !== person.url))
+                        }
+                      >
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -225,74 +220,17 @@ const Category: React.FC = (): JSX.Element => {
             />
           </Box>
 
-          <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-            <DialogTitle>
-              {editingPerson ? "Edit Character" : "Create New Character"}
-            </DialogTitle>
-            <DialogContent>
-              <TextField
-                margin="dense"
-                label="Name"
-                fullWidth
-                value={newPerson.name}
-                onChange={(e) =>
-                  setNewPerson({ ...newPerson, name: e.target.value })
-                }
-                error={!!errors.name}
-                helperText={errors.name}
-              />
-              <TextField
-                margin="dense"
-                label="Height"
-                fullWidth
-                value={newPerson.height}
-                onChange={(e) =>
-                  setNewPerson({ ...newPerson, height: e.target.value })
-                }
-                error={!!errors.height}
-                helperText={errors.height}
-              />
-              <TextField
-                margin="dense"
-                label="Mass"
-                fullWidth
-                value={newPerson.mass}
-                onChange={(e) =>
-                  setNewPerson({ ...newPerson, mass: e.target.value })
-                }
-                error={!!errors.mass}
-                helperText={errors.mass}
-              />
-              <TextField
-                margin="dense"
-                label="Gender"
-                fullWidth
-                value={newPerson.gender}
-                onChange={(e) =>
-                  setNewPerson({ ...newPerson, gender: e.target.value })
-                }
-                error={!!errors.gender}
-                helperText={errors.gender}
-              />
-              <TextField
-                margin="dense"
-                label="Birth Year"
-                fullWidth
-                value={newPerson.birth_year}
-                onChange={(e) =>
-                  setNewPerson({ ...newPerson, birth_year: e.target.value })
-                }
-                error={!!errors.birth_year}
-                helperText={errors.birth_year}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-              <Button onClick={handleSave} disabled={!isFormValid}>
-                {editingPerson ? "Save" : "Create"}
-              </Button>
-            </DialogActions>
-          </Dialog>
+          <PersonDialog
+            open={openDialog}
+            onClose={() => setOpenDialog(false)}
+            onSave={handleSave}
+            person={newPerson}
+            setPerson={(updatedFields) =>
+              setNewPerson({ ...newPerson, ...updatedFields })
+            }
+            errors={errors}
+            formTouched={formTouched}
+          />
         </>
       )}
     </div>

@@ -2,7 +2,14 @@
 
 ## Project Description
 
-Search information for your favorite Star Wars characters.
+Search for information about your favorite Star Wars characters.
+\*Only the People page is available.
+
+Search for a term that might be found under the People category (e.g., "Darth Vader," "Luke," etc.).
+
+- Press the "View All People" button to navigate to the People page.
+- You can edit each row, add a new person, or delete a person.
+- The data is stored locally and will be deleted upon page refresh.
 
 ## Installation Instructions
 
