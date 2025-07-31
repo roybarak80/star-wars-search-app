@@ -8,5 +8,6 @@ export default (
   <Routes>
     <Route path="/" element={<Home />} />
     <Route path="/:category" element={<Catergory />} />
+    <Route path="/:category/:id" element={<Catergory />} />
   </Routes>
 );
